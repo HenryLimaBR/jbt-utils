@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # Project directories and files
-dist-electron
+dist-electron/
