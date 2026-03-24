@@ -1,9 +1,11 @@
+import 'regenerator-runtime/runtime'
 import { app, clipboard, Menu, nativeImage, Notification, Tray } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 import { extendedClipboard } from './utils/ExtendedClipboard'
+import { writeFile } from 'node:fs/promises'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -39,7 +41,7 @@ function createTrayIcon() {
   const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'icon.png'))
 
   trayIcon = new Tray(trayImage)
-  
+
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Sair', click: () => app.quit() },
   ])
@@ -48,15 +50,13 @@ function createTrayIcon() {
   trayIcon.setContextMenu(contextMenu)
 }
 
-app.whenReady().then(() => {
-  // createWindow()
-  createTrayIcon()
-})
-
-let ocrWorker: Tesseract.Worker | null = null
-
 app.whenReady().then(async () => {
-  ocrWorker = await tesseract.createWorker('por')
+  createTrayIcon()
+
+  const ocrWorker = await tesseract.createWorker(
+    ['por', 'eng'],
+    tesseract.OEM.DEFAULT,
+  )
 
   await ocrWorker.setParameters({
     tessedit_pageseg_mode: tesseract.PSM.SINGLE_LINE,
@@ -70,11 +70,14 @@ app.whenReady().then(async () => {
     }
 
     const processedImage = await sharp(image.toPNG())
-      .resize({ width: image.getSize().width * 4, kernel: sharp.kernel.lanczos3, withoutEnlargement: false })
+      .resize({ width: Math.min(image.getSize().width * 2, 2000), kernel: sharp.kernel.lanczos3, withoutEnlargement: false })
       .grayscale()
       .sharpen()
       .threshold(150)
+      .normalize()
       .toBuffer()
+
+    await writeFile(path.join(process.env.APP_ROOT, 'debug', `processed_clipboard_dbg_image.png`), processedImage).catch(console.error)
 
     const { data: { text } } = await ocrWorker.recognize(processedImage, { rotateAuto: true })
 
@@ -108,4 +111,3 @@ app.whenReady().then(async () => {
     }
   })
 })
-
