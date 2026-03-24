@@ -1,11 +1,15 @@
-import { app, BrowserWindow } from 'electron'
-// import { createRequire } from 'node:module'
+import { app, clipboard, Menu, nativeImage, Notification, Tray } from 'electron'
+import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import clipboardListener from 'clipboard-event'
 
-// const require = createRequire(import.meta.url)
+import { extendedClipboard } from './utils/ExtendedClipboard'
+
+const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+const tesseract = require('tesseract.js') as typeof import('tesseract.js')
+const sharp = require('sharp') as typeof import('sharp')
 
 // The built directory structure
 //
@@ -25,57 +29,83 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-let win: BrowserWindow | null
+let trayIcon: Tray | null = null
 
-function createWindow() {
-  win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
-    },
-  })
-
-  // Test active push message to Renderer-process.
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', (new Date).toLocaleString())
-  })
-
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL)
-  } else {
-    // win.loadFile('dist/index.html')
-    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+function createTrayIcon() {
+  if (trayIcon) {
+    return
   }
 
-  win.setMenuBarVisibility(false)
-  win.setMenu(null)
+  const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'jb.png'))
+
+  trayIcon = new Tray(trayImage)
+  
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Sair', click: () => app.quit() },
+  ])
+
+  trayIcon.setToolTip('JBT Utils')
+  trayIcon.setContextMenu(contextMenu)
 }
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-    win = null
-  }
-})
-
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})
-
-app.whenReady().then(createWindow)
 app.whenReady().then(() => {
-  clipboardListener.on('change', () => {
-    console.log('Clipboard changed')
+  // createWindow()
+  createTrayIcon()
+})
+
+let ocrWorker: Tesseract.Worker | null = null
+
+app.whenReady().then(async () => {
+  ocrWorker = await tesseract.createWorker('por')
+
+  await ocrWorker.setParameters({
+    tessedit_pageseg_mode: tesseract.PSM.SINGLE_LINE,
+    tessedit_char_whitelist: '0123456789., ',
   })
-  
-  console.log('Clipboard listener started')
-  clipboardListener.startListening()
+
+  extendedClipboard.on('image', async (image: Electron.NativeImage) => {
+    if (!ocrWorker) {
+      console.error('OCR Worker não inicializado!')
+      return
+    }
+
+    const processedImage = await sharp(image.toPNG())
+      .resize({ width: image.getSize().width * 4, kernel: sharp.kernel.lanczos3, withoutEnlargement: false })
+      .grayscale()
+      .sharpen()
+      .threshold(150)
+      .toBuffer()
+
+    const { data: { text } } = await ocrWorker.recognize(processedImage, { rotateAuto: true })
+
+    if (text.replace(/\s/g, '').length === 0) {
+      console.log('Nenhum texto detectado na imagem.')
+      return
+    }
+
+    console.log('Text:', text.trim())
+
+    const notification = new Notification({
+      icon: path.join(process.env.APP_ROOT, 'public', 'jb.png'),
+      title: 'Números detectados na imagem!',
+      body: `${text.trim()} - Clique aqui para copiar!`,
+      subtitle: 'Utilitário JB Transportes',
+      urgency: 'critical',
+      closeButtonText: 'Fechar',
+    })
+
+    notification.on('click', () => {
+      clipboard.writeText(text.trim())
+      notification.close()
+    })
+
+    notification.show()
+  })
+
+  app.on('before-quit', async () => {
+    if (ocrWorker) {
+      await ocrWorker.terminate()
+    }
+  })
 })
 
