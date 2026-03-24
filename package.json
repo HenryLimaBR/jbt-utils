@@ -1,8 +1,18 @@
 {
   "name": "jbt-utils",
   "private": true,
-  "version": "1.0.1",
+  "version": "0.0.1",
   "type": "module",
+  "author": {
+    "name": "Heurryson Lima",
+    "email": "djfilipebr@gmail.com",
+    "url": "https://github.com/HenryLimaBR"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HenryLimaBR/jbt-utils.git"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
