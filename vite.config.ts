@@ -26,4 +26,12 @@ export default defineConfig({
         : {},
     }),
   ],
+  build: {
+    rollupOptions: {
+      external: ['electron', 'tesseract.js', 'sharp', 'tesseract.js/core'],
+    },
+  },
+  optimizeDeps: {
+    exclude: ['tesseract.js', 'sharp', 'tesseract.js/core'],
+  },
 })
