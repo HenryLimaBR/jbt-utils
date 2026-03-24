@@ -36,7 +36,7 @@ function createTrayIcon() {
     return
   }
 
-  const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'jb.png'))
+  const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'icon.png'))
 
   trayIcon = new Tray(trayImage)
   

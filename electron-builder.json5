@@ -4,7 +4,7 @@
   "appId": "br.dev.henrylima.jbt-utils",
   "asar": true,
   "productName": "Utilitários JB Transportes",
-  "icon": "public/jb.png",
+  "icon": "public/icon.png",
   "directories": {
     "output": "release/${version}"
   },
