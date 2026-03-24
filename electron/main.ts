@@ -53,10 +53,7 @@ function createTrayIcon() {
 app.whenReady().then(async () => {
   createTrayIcon()
 
-  const ocrWorker = await tesseract.createWorker(
-    ['por', 'eng'],
-    tesseract.OEM.DEFAULT,
-  )
+  const ocrWorker = await tesseract.createWorker(['por', 'eng'])
 
   await ocrWorker.setParameters({
     tessedit_pageseg_mode: tesseract.PSM.SINGLE_LINE,
