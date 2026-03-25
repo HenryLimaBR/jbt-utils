@@ -3,7 +3,7 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "br.dev.henrylima.jbt-utils",
   "asar": true,
-  "productName": "Utilitários JB Transportes",
+  "productName": "JB Transportes Utility Tools",
   "icon": "public/icon.png",
   "directories": {
     "output": "release/${version}"
@@ -37,7 +37,8 @@
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "artifactName": "jbt-utils-${version}.${ext}"
   },
   "linux": {
     "target": [
