@@ -10,6 +10,9 @@ import { OpticalCharRecog } from './utils/OpticalCharRecog'
 import { ImageEdit } from './utils/ImageEdit'
 // import { createClipboardWindow } from './window/clipboardWindow'
 
+app.setAppUserModelId('com.jb.transportes.utils')
+app.setName('JB Transportes Utility Tools')
+
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -27,6 +30,23 @@ process.env.APP_ROOT = path.join(__dirname, '..')
 export const iconPath = app.isPackaged
   ? path.join(process.resourcesPath, 'public', 'icon.png')
   : path.join(process.env.APP_ROOT, 'public', 'icon.png')
+
+const isSingleInstanceLocked = app.requestSingleInstanceLock()
+
+if (!isSingleInstanceLocked) {
+  app.quit()
+  process.exit(0)
+} else {
+  app.on('second-instance', () => {
+    new Notification({
+      icon: iconPath,
+      title: 'Aplicativo já em execução',
+      body: 'O aplicativo já está em execução. Por favor, verifique a bandeja do sistema.',
+      urgency: 'critical',
+      closeButtonText: 'Fechar',
+    }).show()
+  })
+}
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
