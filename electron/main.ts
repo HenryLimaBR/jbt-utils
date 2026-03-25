@@ -13,7 +13,6 @@ import { ImageEdit } from './utils/ImageEdit'
 // const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -24,6 +23,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // │ │ └── preload.mjs
 // │
 process.env.APP_ROOT = path.join(__dirname, '..')
+
+export const iconPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'public', 'icon.png')
+  : path.join(process.env.APP_ROOT, 'public', 'icon.png')
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
@@ -59,8 +62,8 @@ app.whenReady().then(async () => {
     const notification = new Notification({
       icon: path.join(process.env.APP_ROOT, 'public', 'jb.png'),
       title: 'Números detectados na imagem!',
-      body: `${text.trim()} - Clique aqui para copiar!`,
-      subtitle: 'Utilitário JB Transportes',
+      body: 'Clique aqui para copiar!',
+      subtitle: `${text.trim()}`,
       urgency: 'critical',
       closeButtonText: 'Fechar',
     })
@@ -77,4 +80,16 @@ app.whenReady().then(async () => {
   app.on('before-quit', async () => {
     await OpticalCharRecog.terminateAll()
   })
+})
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err)
+  app.quit()
+  process.exit(1)
+})
+
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Rejection:', err)
+  app.quit()
+  process.exit(1)
 })
