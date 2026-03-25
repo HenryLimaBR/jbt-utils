@@ -2,7 +2,6 @@ import 'regenerator-runtime/runtime'
 import { app, clipboard, Notification, Tray } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { writeFile } from 'node:fs/promises'
 
 import { extendedClipboard } from './utils/ExtendedClipboard'
 import { createTray } from './tray'
@@ -44,6 +43,7 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 export let tray: Tray | null = null
+// TODO Tela de clipboard para mostrar o texto copiado e permitir copiar formatado de formas diferentes
 // export let clipboardWindow: BrowserWindow | null = null
 
 app.whenReady().then(async () => {
@@ -56,8 +56,6 @@ app.whenReady().then(async () => {
       height: image.getSize().height
     })
 
-    await writeFile(path.join(process.env.APP_ROOT, 'debug', `processed_clipboard_dbg_image.png`), processedImage).catch(console.error)
-
     const text = await OpticalCharRecog.recognize('text', processedImage)
 
     if (text.replace(/\s/g, '').length === 0) {
@@ -65,13 +63,10 @@ app.whenReady().then(async () => {
       return
     }
 
-    console.log('Text:', text.trim())
-
     const notification = new Notification({
       icon: path.join(process.env.APP_ROOT, 'public', 'jb.png'),
       title: 'Números detectados na imagem!',
-      body: 'Clique aqui para copiar!',
-      subtitle: `${text.trim()}`,
+      body: `${text.trim()}\nClique aqui para copiar!`,
       urgency: 'critical',
       closeButtonText: 'Fechar',
     })

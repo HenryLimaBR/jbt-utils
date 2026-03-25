@@ -1,3 +1,5 @@
+// TODO Tela de clipboard para mostrar o texto copiado e permitir copiar formatado de formas diferentes
+
 /* import { BrowserWindow } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
