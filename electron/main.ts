@@ -31,21 +31,9 @@ export const iconPath = app.isPackaged
   ? path.join(process.resourcesPath, 'public', 'icon.png')
   : path.join(process.env.APP_ROOT, 'public', 'icon.png')
 
-const isSingleInstanceLocked = app.requestSingleInstanceLock()
-
-if (!isSingleInstanceLocked) {
+if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
-} else {
-  app.on('second-instance', () => {
-    new Notification({
-      icon: iconPath,
-      title: 'Aplicativo já em execução',
-      body: 'O aplicativo já está em execução. Por favor, verifique a bandeja do sistema.',
-      urgency: 'critical',
-      closeButtonText: 'Fechar',
-    }).show()
-  })
 }
 
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
