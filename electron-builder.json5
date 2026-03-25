@@ -1,7 +1,7 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "br.dev.henrylima.jbt-utils",
+  "appId": "com.jb.transportes.utils",
   "asar": true,
   "productName": "JB Transportes Utility Tools",
   "icon": "public/icon.png",
