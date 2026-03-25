@@ -56,7 +56,7 @@ app.whenReady().then(async () => {
       height: image.getSize().height
     })
 
-    const text = await OpticalCharRecog.recognize('text', processedImage)
+    const text = await OpticalCharRecog.recognize('number', processedImage)
 
     if (text.replace(/\s/g, '').length === 0) {
       return
