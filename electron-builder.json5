@@ -9,9 +9,15 @@
     "output": "release/${version}"
   },
   "asarUnpack": [
-    "node_modules/tesseract.js/**"
+    "node_modules/tesseract.js/**",
+    "node_modules/sharp/**"
   ],
-  "extraResources": [],
+  "extraResources": [
+    {
+      "from": "public",
+      "to": "public"
+    }
+  ],
   "files": [
     "dist",
     "dist-electron"
@@ -31,14 +37,13 @@
         ]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "jbtutils-Windows-${version}-Setup.${ext}"
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false,
-    "artifactName": "jbt-utils-${version}.${ext}"
   },
   "linux": {
     "target": [
