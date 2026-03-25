@@ -1,7 +1,7 @@
 {
   "name": "jbt-utils",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Ferramentas utilitárias para a equipe de tecnologia da JB Transportes",
   "type": "module",
   "author": {
