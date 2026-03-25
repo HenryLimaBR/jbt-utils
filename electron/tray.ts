@@ -1,12 +1,11 @@
 import { app, nativeImage, Tray, Menu } from 'electron'
-import path from 'node:path'
 
-import { tray } from './main'
+import { iconPath, tray } from './main'
 
 export function createTray() {
   if (tray) return tray
 
-  const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'icon.png'))
+  const trayImage = nativeImage.createFromPath(iconPath)
 
   const __tray = new Tray(trayImage)
 
