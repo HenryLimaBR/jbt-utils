@@ -59,7 +59,6 @@ app.whenReady().then(async () => {
     const text = await OpticalCharRecog.recognize('text', processedImage)
 
     if (text.replace(/\s/g, '').length === 0) {
-      console.log('Nenhum texto detectado na imagem.')
       return
     }
 
