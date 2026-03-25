@@ -1,17 +1,18 @@
 import 'regenerator-runtime/runtime'
-import { app, clipboard, Menu, nativeImage, Notification, Tray } from 'electron'
-import { createRequire } from 'node:module'
+import { app, clipboard, Notification, Tray } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-
-import { extendedClipboard } from './utils/ExtendedClipboard'
 import { writeFile } from 'node:fs/promises'
 
-const require = createRequire(import.meta.url)
+import { extendedClipboard } from './utils/ExtendedClipboard'
+import { createTray } from './tray'
+import { OpticalCharRecog } from './utils/OpticalCharRecog'
+import { ImageEdit } from './utils/ImageEdit'
+// import { createClipboardWindow } from './window/clipboardWindow'
+
+// const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-const tesseract = require('tesseract.js') as typeof import('tesseract.js')
-const sharp = require('sharp') as typeof import('sharp')
 
 // The built directory structure
 //
@@ -31,52 +32,22 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
-let trayIcon: Tray | null = null
-
-function createTrayIcon() {
-  if (trayIcon) {
-    return
-  }
-
-  const trayImage = nativeImage.createFromPath(path.join(process.env.APP_ROOT, 'public', 'icon.png'))
-
-  trayIcon = new Tray(trayImage)
-
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Sair', click: () => app.quit() },
-  ])
-
-  trayIcon.setToolTip('JBT Utils')
-  trayIcon.setContextMenu(contextMenu)
-}
+export let tray: Tray | null = null
+// export let clipboardWindow: BrowserWindow | null = null
 
 app.whenReady().then(async () => {
-  createTrayIcon()
-
-  const ocrWorker = await tesseract.createWorker(['por', 'eng'])
-
-  await ocrWorker.setParameters({
-    tessedit_pageseg_mode: tesseract.PSM.SINGLE_LINE,
-    tessedit_char_whitelist: '0123456789., ',
-  })
+  tray = createTray()
+  // clipboardWindow = createClipboardWindow()
 
   extendedClipboard.on('image', async (image: Electron.NativeImage) => {
-    if (!ocrWorker) {
-      console.error('OCR Worker não inicializado!')
-      return
-    }
-
-    const processedImage = await sharp(image.toPNG())
-      .resize({ width: Math.min(image.getSize().width * 2, 2000), kernel: sharp.kernel.lanczos3, withoutEnlargement: false })
-      .grayscale()
-      .sharpen()
-      .threshold(150)
-      .normalize()
-      .toBuffer()
+    const processedImage = await ImageEdit.prepareForOCR(image.toPNG(), {
+      width: image.getSize().width,
+      height: image.getSize().height
+    })
 
     await writeFile(path.join(process.env.APP_ROOT, 'debug', `processed_clipboard_dbg_image.png`), processedImage).catch(console.error)
 
-    const { data: { text } } = await ocrWorker.recognize(processedImage, { rotateAuto: true })
+    const text = await OpticalCharRecog.recognize('text', processedImage)
 
     if (text.replace(/\s/g, '').length === 0) {
       console.log('Nenhum texto detectado na imagem.')
@@ -97,14 +68,13 @@ app.whenReady().then(async () => {
     notification.on('click', () => {
       clipboard.writeText(text.trim())
       notification.close()
+      // clipboardWindow = createClipboardWindow()
     })
 
     notification.show()
   })
 
   app.on('before-quit', async () => {
-    if (ocrWorker) {
-      await ocrWorker.terminate()
-    }
+    await OpticalCharRecog.terminateAll()
   })
 })
